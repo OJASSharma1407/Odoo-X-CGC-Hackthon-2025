@@ -8,6 +8,9 @@ const NotesSchema = mongoose.Schema({
     date:{
         type:Date,
         default:Date.now
+    },completed: {
+        type: Boolean,
+        default: false
     },
     dueDate:{
         type:Date,
