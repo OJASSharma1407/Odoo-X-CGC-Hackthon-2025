@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const port = 5000;
+require('dotenv').config();
+const db_url = process.env.mongo_url;
 const cors = require('cors');
     app.use(cors());
 
@@ -10,7 +12,7 @@ const cors = require('cors');
 app.use(express.json());
 
 //Connect DataBase
-mongoose.connect('mongodb+srv://hello14sharma:N0YSkAp0WCVD2ek1@cluster0.0kabnvk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect(`${db_url}`)
 .then(()=>{
     console.log('DB is connected');
 }).catch((err)=>{
