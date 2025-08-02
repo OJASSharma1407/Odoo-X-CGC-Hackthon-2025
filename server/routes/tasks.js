@@ -1,88 +1,67 @@
 const express = require('express');
 const router = express.Router();
-const Tasks = require('../models/Tasks');
+const fetchuser = require('../middleware/fetchuser');
+const Task = require('../models/Tasks');
 
+// ADD TASK (secure)
+router.post('/add-task', fetchuser, async (req, res) => {
+  try {
+    const { description, dueDate, priority, category, completed } = req.body;
 
-//---------Add-Notes-------//
-router.post('/add-notes', async (req, res) => {
-    try {
-        const { description, dueDate } = req.body;
+    if (!description) return res.status(400).json({ error: 'Task description is required' });
 
-        const newNote = new Tasks({
-            description,
-            dueDate: dueDate || null
-        });
+    const newTask = new Task({
+      user: req.user.id,
+      description,
+      dueDate,
+      priority,
+      category,
+      completed
+    });
 
-        const savedNote = await newNote.save();
-        res.status(201).json(savedNote);
-    } catch (err) {
-        res.status(500).json({ error: 'Server error while creating note' });
-    }
+    const saved = await newTask.save();
+    res.json(saved);
+  } catch (err) {
+    console.error('Error in add-task:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-//---------Get-Tasks-------//
-router.get('/get-Tasks', async (req, res) => {
-    try {
-        const notes = await Tasks.find().sort({ createdAt: -1 });
-        res.status(200).json(notes);
-    } catch (err) {
-        res.status(500).json({ error: 'Server error while fetching notes' });
-    }
+// GET ALL TASKS FOR LOGGED-IN USER
+router.get('/get-task', fetchuser, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(tasks);
+  } catch (err) {
+    console.error('Error in get-task:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-//---------Update-tasks-------//
-router.put('/update-Tasks/:id',async(req,res)=>{
-    try{
-        const {description} = req.body;
-        const task = await Tasks.findById(req.params.id);
-        if(!task){
-            res.status(400).send('taks Does not exists');
-        }
-
-        if(description){task.description = description};
-        await task.save();
-        res.status(200).json(task);
-    }catch(err){
-        res.status(500).json({ error: 'Server error while updating tasks' });
-    }
-})
-
-//---------delete-tasks-------//
-router.delete('/del-task/:id', async (req, res) => {
-    try {
-        const deletedNote = await Note.findByIdAndDelete(req.params.id);
-
-        if (!deletedNote) {
-            return res.status(404).json({ error: 'Note not found' });
-        }
-
-        res.status(200).json({ message: 'Note deleted successfully', note: deletedNote });
-    } catch (err) {
-        res.status(500).json({ error: 'Server error while deleting note' });
-    }
+// DELETE
+router.delete('/delete-task/:id', fetchuser, async (req, res) => {
+  try {
+    await Task.deleteOne({ _id: req.params.id, user: req.user.id });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete error:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-//---------task-complete-------//
-router.put('/api/tasks/complete/:id', async (req, res) => {
-    try {
-        const task = await Task.findById(req.params.id);
-
-        if (!task) {
-            return res.status(404).json({ error: 'Task not found' });
-        }
-
-        // Mark it as completed
-        task.completed = true;
-        await task.save();
-
-        // Delete the completed task
-        await Tasks.findByIdAndDelete(req.params.id);
-
-        res.status(200).json({ message: 'Task completed and deleted' });
-
-    } catch (err) {
-        res.status(500).json({ error: 'Server error while completing task' });
-    }
+// COMPLETE
+router.put('/complete-task/:id', fetchuser, async (req, res) => {
+  try {
+    const updated = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { completed: true },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    console.error('Complete error:', err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 module.exports = router;

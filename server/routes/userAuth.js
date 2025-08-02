@@ -4,52 +4,54 @@ const router = express.Router();
 const User = require('../models/User');
 const {body,validationResult} = require('express-validator');
 const bcrypt = require('bcrypt');
-const salt = bcrypt.genSalt(10);
 const jwt = require('jsonwebtoken');
 const secret = process.env.jwt_secret;
 
 
 // ========== SIGN-IN (REGISTER) ==========
-router.post('/signin',[
+router.post('/sign-in', [
     body('email', "Enter a valid email").isEmail(),
     body('password', "Password must be at least 8 characters").isLength({ min: 8 })
-],async(req,res)=>{
+], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-    try{
-        const {username,email,password} = req.body;
-        //Check if email existes
-        const userExists = await User.findOne({email});
-        if(userExists){
-            return res.status(400).send("Email already Registered");
+
+    try {
+        const { username, email, password } = req.body;
+
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ error: "Email already registered" });
         }
 
-        // Hash the password with salt
-        const secPass = await bcrypt.hash(password,salt);
+        // ✅ Hash password here
+        const secPass = await bcrypt.hash(password, 10);
 
-        // Create user
         const newUser = new User({
             username,
             email,
-            password:secPass
-        })
+            password: secPass
+        });
 
-        // Create token
         const data = {
-            id:newUser.id  
-        }
-        const authToken  = jwt.sign(data,secret)
+            user: {
+                id: newUser.id
+            }
+        };
+
+        const authToken = jwt.sign(data, secret);
         await newUser.save();
 
-        res.send(authToken);
+       res.json({ token: authToken });
 
-    }catch(err){
-        res.status(500).json({error:"server error"});
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
     }
-})
-
+});
 
 // ========== LOGIN ==========
 
@@ -79,11 +81,15 @@ router.post('/log-in', [
 
         // Generate JWT
         const data ={
-            id:user.id
+            user:{
+
+                id:user.id
+            }
         }
         const authToken = jwt.sign(data,secret);
+        console.log(authToken);
+       res.json({ token: authToken });
 
-        res.status(200).json({ token: authToken });
     } catch (err) {
         res.status(500).json({ error: "Server error" });
     }

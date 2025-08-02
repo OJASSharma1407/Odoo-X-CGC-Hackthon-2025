@@ -11,6 +11,7 @@ const cors = require('cors');
 //Middle Ware
 app.use(express.json());
 
+
 //Connect DataBase
 mongoose.connect(`${db_url}`)
 .then(()=>{
@@ -20,7 +21,11 @@ mongoose.connect(`${db_url}`)
 })
 
 //Routes
-app.use('/userAuth',require('./routes/userAuth'))
+app.use('/userAuth',require('./routes/userAuth'));
+app.use('/notes',require('./routes/notes'));
+app.use('/tasks',require('./routes/tasks'));
+app.use('calenderTasks',require('./routes/googleRoutes'));
+
 
 app.listen(port,()=>{
     console.log(`Connected on port ${port}`);

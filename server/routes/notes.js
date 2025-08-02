@@ -6,13 +6,16 @@ const { body, validationResult } = require("express-validator");
 
 
 //ROUTE1: GET ALL NOTES. login required
-router.get("/fetch-all-notes", fetchuser, async (req, res) => {
+router.get('/fetch-all-notes', fetchuser, async (req, res) => {
+  console.log('Token verified for user:', req.user);
+  console.log('Header auth-token:', req.header('auth-token'));
+  console.log('Decoded user:', req.user); // ✅ check what this prints
   try {
     const notes = await Notes.find({ user: req.user.id });
-    res.send(notes);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Internal Server Error");
+    res.json(notes);
+  } catch (error) {
+    console.error('Error fetching notes:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

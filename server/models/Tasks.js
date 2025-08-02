@@ -1,21 +1,15 @@
 const mongoose = require('mongoose');
 
-const NotesSchema = mongoose.Schema({
-    description:{
-        type:String,
-        required:true
+const taskSchema = new mongoose.Schema({
+    user:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'user'
     },
-    date:{
-        type:Date,
-        default:Date.now
-    },completed: {
-        type: Boolean,
-        default: false
-    },
-    dueDate:{
-        type:Date,
-         default: null
-    }
-})
+  description: { type: String, required: true },
+  dueDate: { type: String },
+  priority: { type: String, default: 'medium' },
+  category: { type: String, default: 'General' },
+  completed: { type: Boolean, default: false }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Notes',NotesSchema);
+module.exports = mongoose.model('Task', taskSchema);
